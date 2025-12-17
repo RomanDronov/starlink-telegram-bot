@@ -37,14 +37,9 @@ function passDurationMs(pass) {
     return pass.end.getTime() - pass.start.getTime()
 }
 
-function isLikelyVisible(pass) {
-    const durMin = passDurationMs(pass) / 60000
-    return durMin >= 1 && pass.maxElevationDeg >= 20
-}
-
 function isNotifyWorthy(pass) {
     const durMin = passDurationMs(pass) / 60000
-    return durMin >= 3 && pass.maxElevationDeg >= 30
+    return durMin >= 3 && pass.maxElevationDeg >= 25
 }
 
 function scorePass(pass) {
@@ -115,7 +110,6 @@ function isSatelliteSunlit(satrec, date) {
 
 
 module.exports = {
-    isLikelyVisible,
     passDurationMin,
     scorePass,
     isNotifyWorthy,
