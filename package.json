@@ -1,0 +1,17 @@
+{
+  "name": "starlink-telegram-bot",
+  "version": "0.1.0",
+  "license": "MIT",
+  "main": "src/bot.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node src/bot.js"
+  },
+  "dependencies": {
+    "node-telegram-bot-api": "^0.66.0",
+    "satellite.js": "^5.0.0",
+    "suncalc": "^1.9.0",
+    "node-fetch": "^2.6.7",
+    "dotenv": "^16.0.0"
+  }
+}
