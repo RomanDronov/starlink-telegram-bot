@@ -1,74 +1,56 @@
-const { getNextVisibleStarlinkPass } = require('./starlink')
-const config = require('./config')
+const { getVisibleStarlinkPassesForLocation } = require('./starlink')
 
-/**
- * Map: userId -> { timeoutId, passInfo }
- */
-const userSchedules = new Map()
-
-/**
- * Schedule a notification for the next visible pass.
- * `sendFn` is a function (chatId, text) => void
- */
-async function scheduleNextPassForUser(userId, chatId, lat, lon, sendFn) {
-    const existing = userSchedules.get(userId)
-    if (existing?.timeoutId) {
-        clearTimeout(existing.timeoutId)
-    }
-
+async function handleLocationAndListPasses(userId, chatId, lat, lon) {
     const now = new Date()
-    const result = await getNextVisibleStarlinkPass(lat, lon, now)
 
-    if (!result) {
-        sendFn(chatId, 'No visible Starlink pass predicted in the next 24 hours 📭')
-        userSchedules.delete(userId)
+    let passes
+    try {
+        passes = await getVisibleStarlinkPassesForLocation(lat, lon, now, 100)
+    } catch (err) {
+        console.error(err)
+        await send(chatId, 'Error while computing Starlink passes. Try again later.')
         return
     }
 
-    const { satelliteName, pass } = result
-    const { maxTime, maxElevationDeg } = pass
-
-    const notifyTime = new Date(maxTime.getTime() - 30 * 60 * 1000) // -30 min
-
-    if (notifyTime <= now) {
-        sendFn(
+    if (!passes.length) {
+        await send(
             chatId,
-            `Starlink pass very soon!\nSatellite: ${satelliteName}\nMax elevation: ${maxElevationDeg.toFixed(
-                1
-            )}° at ${maxTime.toISOString()}`
+            'No visible Starlink passes predicted for the next 24 hours over this location 📭'
         )
-        userSchedules.delete(userId)
         return
     }
 
-    const delayMs = notifyTime.getTime() - now.getTime()
+    // limit how much we spam – e.g. show first 10 passes
+    const maxToShow = 10
+    const subset = passes.slice(0, maxToShow)
 
-    const timeoutId = setTimeout(() => {
-        const msg =
-            `Starlink pass in ~30 minutes 🚀\n\n` +
+    let text =
+        `Found ${passes.length} visible Starlink passes for the next 24 hours over your location.\n` +
+        `Here are the first ${subset.length}:\n\n`
+
+    subset.forEach((entry, idx) => {
+        const { satelliteName, pass } = entry
+        const start = pass.start.toISOString()
+        const end = pass.end.toISOString()
+        const peak = pass.maxTime.toISOString()
+        text +=
+            `#${idx + 1}\n` +
             `Satellite: ${satelliteName}\n` +
-            `Max elevation: ${maxElevationDeg.toFixed(1)}°\n` +
-            `Peak time (UTC): ${maxTime.toISOString()}`
-        sendFn(chatId, msg)
-
-        userSchedules.delete(userId)
-    }, delayMs)
-
-    userSchedules.set(userId, {
-        timeoutId,
-        passInfo: { satelliteName, pass }
+            `Start (UTC): ${start}\n` +
+            `End   (UTC): ${end}\n` +
+            `Peak  (UTC): ${peak}\n` +
+            `Max elevation: ${pass.maxElevationDeg.toFixed(1)}°\n\n`
     })
 
-    sendFn(
-        chatId,
-        `Got your location. Next *predicted visible* Starlink pass:\n\n` +
-        `Satellite: ${satelliteName}\n` +
-        `Max elevation: ${maxElevationDeg.toFixed(1)}°\n` +
-        `Peak time (UTC): ${maxTime.toISOString()}\n\n` +
-        `I'll ping you 30 minutes before.`
-    )
+    text +=
+        '_Times shown in UTC. Visibility is approximate (ignores clouds and, currently, satellite shadow)._'
+
+    await send(chatId, text)
+
+    const first = subset[0]
+    await scheduleNotificationForPass(userId, chatId, first)
 }
 
 module.exports = {
-    scheduleNextPassForUser
+    handleLocationAndListPasses
 }

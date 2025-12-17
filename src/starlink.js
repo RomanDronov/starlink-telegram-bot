@@ -55,7 +55,7 @@ function getLookAngles(satrec, time, latDeg, lonDeg, heightKm = 0) {
     const positionEci = positionAndVelocity.position
 
     if (!positionEci) {
-        return null // propagation failed for this time (can happen for old TLEs)
+        return null
     }
 
     const gmst = satellite.gstime(
@@ -72,7 +72,7 @@ function getLookAngles(satrec, time, latDeg, lonDeg, heightKm = 0) {
     const observerGd = {
         longitude: satellite.degreesToRadians(lonDeg),
         latitude: satellite.degreesToRadians(latDeg),
-        height: heightKm / 1000 // satellite.js expects km? (we pass km directly below)
+        height: heightKm // ✅ km, not divided
     }
 
     const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf)
@@ -83,7 +83,6 @@ function getLookAngles(satrec, time, latDeg, lonDeg, heightKm = 0) {
         rangeKm: lookAngles.rangeSat
     }
 }
-
 /**
  * Check if the *ground* is dark enough (night / evening) for observation.
  * Uses Sun altitude at observer location.
@@ -156,10 +155,9 @@ function findVisiblePassesForSatellite(satrec, latDeg, lonDeg, now = new Date())
             }
         } else if (!visibleNow && inPass) {
             // Pass ended at previous time step
-            const passEnd = lastTime
             passes.push({
                 start: passStart,
-                end: passEnd,
+                end: lastTime,
                 maxElevationDeg,
                 maxTime
             })
@@ -186,38 +184,47 @@ function findVisiblePassesForSatellite(satrec, latDeg, lonDeg, now = new Date())
 }
 
 /**
- * Get next visible pass over given location using the *first* Starlink sat.
- * For demo: pick the first TLE in the list.
+ * Return ALL visible Starlink passes over a location within the look-ahead window.
  *
- * @returns {Promise<{satelliteName, pass} | null>}
+ * @param {number} latDeg
+ * @param {number} lonDeg
+ * @param {Date} [now]
+ * @param {number} [maxSatellitesToScan]  - performance cap
+ * @returns {Promise<Array<{satelliteName: string, pass: {start: Date, end: Date, maxElevationDeg: number, maxTime: Date}}>>}
  */
-async function getNextVisibleStarlinkPass(latDeg, lonDeg, now = new Date()) {
+async function getVisibleStarlinkPassesForLocation(
+    latDeg,
+    lonDeg,
+    now = new Date(),
+    maxSatellitesToScan = 100
+) {
     const tles = await fetchStarlinkTles()
-    if (!tles.length) return null
+    if (!tles.length) return []
 
-    // For a more serious version:
-    // - pick multiple sats,
-    // - find passes for each,
-    // - pick earliest upcoming pass overall.
-    const tle = tles[0]
-    const satrec = makeSatrecFromTle(tle)
-    const passes = findVisiblePassesForSatellite(satrec, latDeg, lonDeg, now)
+    const limit = Math.min(tles.length, maxSatellitesToScan)
+    const results = []
 
-    if (!passes.length) return null
+    for (let i = 0; i < limit; i += 1) {
+        const tle = tles[i]
+        const satrec = makeSatrecFromTle(tle)
+        const passes = findVisiblePassesForSatellite(satrec, latDeg, lonDeg, now)
 
-    // Choose earliest pass.start > now
-    const upcoming = passes
-        .filter(p => p.start > now)
-        .sort((a, b) => a.start - b.start)[0]
+        for (const pass of passes) {
+            if (pass.end <= now) continue // skip already-finished passes
 
-    if (!upcoming) return null
-
-    return {
-        satelliteName: tle.name,
-        pass: upcoming
+            results.push({
+                satelliteName: tle.name,
+                pass
+            })
+        }
     }
+
+    // Sort by start time
+    results.sort((a, b) => a.pass.start - b.pass.start)
+
+    return results
 }
 
 module.exports = {
-    getNextVisibleStarlinkPass
+    getVisibleStarlinkPassesForLocation
 }

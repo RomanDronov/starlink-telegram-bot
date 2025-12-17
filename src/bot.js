@@ -1,6 +1,6 @@
 const TelegramBot = require('node-telegram-bot-api')
 const config = require('./config')
-const { scheduleNextPassForUser } = require('./scheduler')
+const { handleLocationAndListPasses } = require('./scheduler')
 
 const bot = new TelegramBot(config.telegramToken, { polling: true })
 
@@ -38,17 +38,14 @@ bot.onText(/\/setlocation ([-+]?\d+(\.\d+)?) ([-+]?\d+(\.\d+)?)/, async msg => {
     }
 
     userLocations.set(userId, { lat, lon })
-    send(chatId, `Location updated to lat=${lat.toFixed(3)}, lon=${lon.toFixed(3)} ✅`)
+    await send(
+        chatId,
+        `Location updated to lat=${lat.toFixed(3)}, lon=${lon.toFixed(3)} ✅\nCalculating visible passes...`
+    )
 
-    try {
-        await scheduleNextPassForUser(userId, chatId, lat, lon, send)
-    } catch (err) {
-        console.error(err)
-        send(chatId, 'Error while computing Starlink passes. Try again later.')
-    }
+    await handleLocationAndListPasses(userId, chatId, lat, lon)
 })
 
-// Handle Telegram "live" location messages
 bot.on('message', async msg => {
     const chatId = msg.chat.id
     const userId = msg.from.id
@@ -56,19 +53,14 @@ bot.on('message', async msg => {
     if (msg.location) {
         const { latitude, longitude } = msg.location
         userLocations.set(userId, { lat: latitude, lon: longitude })
-        send(
+        await send(
             chatId,
             `Location updated via Telegram 📍\nlat=${latitude.toFixed(
                 3
-            )}, lon=${longitude.toFixed(3)}`
+            )}, lon=${longitude.toFixed(3)}\nCalculating visible passes...`
         )
 
-        try {
-            await scheduleNextPassForUser(userId, chatId, latitude, longitude, send)
-        } catch (err) {
-            console.error(err)
-            send(chatId, 'Error while computing Starlink passes. Try again later.')
-        }
+        await handleLocationAndListPasses(userId, chatId, latitude, longitude)
     }
 })
 
