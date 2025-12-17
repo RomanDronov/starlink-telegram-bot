@@ -2,6 +2,7 @@ const fetch = require('node-fetch')
 const satellite = require('satellite.js')
 const SunCalc = require('suncalc')
 const config = require('./config')
+const {getNightWindow, overlapsWindow} = require('./utils')
 
 /**
  * Fetch Starlink TLEs from Celestrak (or another source).
@@ -25,7 +26,7 @@ async function fetchStarlinkTles() {
         const line1 = lines[i + 1]
         const line2 = lines[i + 2]
         if (line1.startsWith('1 ') && line2.startsWith('2 ')) {
-            result.push({ name, line1, line2 })
+            result.push({name, line1, line2})
         } else {
             // TLE format might be 2-line with no name; handle that gracefully.
             // For now, skip malformed triplets.
@@ -58,21 +59,12 @@ function getLookAngles(satrec, time, latDeg, lonDeg, heightKm = 0) {
         return null
     }
 
-    const gmst = satellite.gstime(
-        time.getUTCFullYear(),
-        time.getUTCMonth() + 1,
-        time.getUTCDate(),
-        time.getUTCHours(),
-        time.getUTCMinutes(),
-        time.getUTCSeconds()
-    )
+    const gmst = satellite.gstime(time.getUTCFullYear(), time.getUTCMonth() + 1, time.getUTCDate(), time.getUTCHours(), time.getUTCMinutes(), time.getUTCSeconds())
 
     const positionEcf = satellite.eciToEcf(positionEci, gmst)
 
     const observerGd = {
-        longitude: satellite.degreesToRadians(lonDeg),
-        latitude: satellite.degreesToRadians(latDeg),
-        height: heightKm // ✅ km, not divided
+        longitude: satellite.degreesToRadians(lonDeg), latitude: satellite.degreesToRadians(latDeg), height: heightKm // ✅ km, not divided
     }
 
     const lookAngles = satellite.ecfToLookAngles(observerGd, positionEcf)
@@ -83,6 +75,7 @@ function getLookAngles(satrec, time, latDeg, lonDeg, heightKm = 0) {
         rangeKm: lookAngles.rangeSat
     }
 }
+
 /**
  * Check if the *ground* is dark enough (night / evening) for observation.
  * Uses Sun altitude at observer location.
@@ -138,8 +131,7 @@ function findVisiblePassesForSatellite(satrec, latDeg, lonDeg, now = new Date())
         const groundDark = isGroundDarkEnough(time, latDeg, lonDeg)
         const satSunlit = isSatelliteSunlitPlaceholder()
 
-        const visibleNow =
-            elevationDeg >= config.minElevationDeg && groundDark && satSunlit
+        const visibleNow = elevationDeg >= config.minElevationDeg && groundDark && satSunlit
 
         if (visibleNow && !inPass) {
             // Start of a new pass
@@ -156,10 +148,7 @@ function findVisiblePassesForSatellite(satrec, latDeg, lonDeg, now = new Date())
         } else if (!visibleNow && inPass) {
             // Pass ended at previous time step
             passes.push({
-                start: passStart,
-                end: lastTime,
-                maxElevationDeg,
-                maxTime
+                start: passStart, end: lastTime, maxElevationDeg, maxTime
             })
             inPass = false
             passStart = null
@@ -173,10 +162,7 @@ function findVisiblePassesForSatellite(satrec, latDeg, lonDeg, now = new Date())
     // Handle if pass is ongoing at horizon end
     if (inPass && passStart) {
         passes.push({
-            start: passStart,
-            end: endTime,
-            maxElevationDeg,
-            maxTime
+            start: passStart, end: endTime, maxElevationDeg, maxTime
         })
     }
 
@@ -192,12 +178,7 @@ function findVisiblePassesForSatellite(satrec, latDeg, lonDeg, now = new Date())
  * @param {number} [maxSatellitesToScan]  - performance cap
  * @returns {Promise<Array<{satelliteName: string, pass: {start: Date, end: Date, maxElevationDeg: number, maxTime: Date}}>>}
  */
-async function getVisibleStarlinkPassesForLocation(
-    latDeg,
-    lonDeg,
-    now = new Date(),
-    maxSatellitesToScan = 100
-) {
+async function getVisibleStarlinkPassesForLocation(latDeg, lonDeg, now = new Date(), maxSatellitesToScan = 100) {
     const tles = await fetchStarlinkTles()
     if (!tles.length) return []
 
@@ -213,16 +194,15 @@ async function getVisibleStarlinkPassesForLocation(
             if (pass.end <= now) continue // skip already-finished passes
 
             results.push({
-                satelliteName: tle.name,
-                pass
+                satelliteName: tle.name, pass
             })
         }
     }
 
     // Sort by start time
     results.sort((a, b) => a.pass.start - b.pass.start)
-
-    return results
+    const window = getNightWindow(latDeg, lonDeg, now)
+    return results.filter(({pass}) => overlapsWindow(pass, window))
 }
 
 module.exports = {
