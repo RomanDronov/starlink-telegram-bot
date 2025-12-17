@@ -73,19 +73,54 @@ function estimateBrightness({pass, satrec}) {
     return 'not-visible'
 }
 
-function isSatelliteSunlit(satrec, date) {
-    const positionEci = satellite.propagate(
-        satrec,
-        date
-    ).position
-
-    if (!positionEci) return false
-
-    const gmst = satellite.gstime(date)
-    return satellite.isSunlit(positionEci, gmst)
+function magnitude(v) {
+    return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
+function normalize(v) {
+    const mag = magnitude({x: v[0], y: v[1], z: v[2]});
+    return mag > 0 ? {x: v[0] / mag, y: v[1] / mag, z: v[2] / mag} : {x: 0, y: 0, z: 0};
+}
+
+function dot(a, b) {
+    return a.x * b.x + a.y * b.y + a.z * b.z;
+}
+
+function isSatelliteSunlit(satrec, date) {
+    const pv = satellite.propagate(satrec, date);
+    if (!pv || !pv.position) return false;
+
+    const jday = satellite.jday(date);
+    const sunPos = satellite.sunPos(jday);  // Returns {rsun: [x,y,z], rtasc, decl}
+
+    const satPos = pv.position;  // ECI km
+    const sunDir = normalize(sunPos.rsun);  // Unit vector toward Sun (AU, normalize to unit)
+
+    // Earth radius ~6378.137 km (equatorial mean)
+    const earthR = 6378.137;
+    const satR = magnitude(satPos);  // Satellite distance from Earth center
+
+    if (satR <= earthR) return false;  // Inside Earth
+
+    // Angle between sat pos and sun dir
+    const cosTheta = dot(satPos, sunDir) / satR;  // sunDir unit
+    const theta = Math.acos(Math.max(-1, Math.min(1, cosTheta)));
+
+    // Umbra cone: cos(alpha) = earthR / (earthR + ~0.27 earthR shadow length, simplified)
+    const alpha = 0.27;  // Approx umbra half-angle radians
+    const cosAlpha = earthR / (earthR * (1 + alpha));
+
+    return theta <= Math.PI / 2 || theta < Math.acos(cosAlpha);  // Sunlit if not fully shadowed
+}
+
+
 module.exports = {
-    isLikelyVisible, passDurationMin, scorePass, isNotifyWorthy, getNightWindow, overlapsWindow, formatLocalTime,
+    isLikelyVisible,
+    passDurationMin,
+    scorePass,
+    isNotifyWorthy,
+    getNightWindow,
+    overlapsWindow,
+    formatLocalTime,
     estimateBrightness
 }
