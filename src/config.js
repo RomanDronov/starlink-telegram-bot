@@ -1,5 +1,7 @@
 require('dotenv').config()
 
+console.log('TOKEN loaded:', !!process.env.TELEGRAM_BOT_TOKEN)
+
 const config = {
     telegramToken: process.env.TELEGRAM_BOT_TOKEN,
     starlinkTleUrl:
