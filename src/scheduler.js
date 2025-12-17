@@ -1,7 +1,7 @@
 const tzLookup = require('tz-lookup')
 
 const {getVisibleStarlinkPassesForLocation} = require('./starlink')
-const {getNightWindow} = require('./utils')
+const {getNightWindow, formatLocalTime} = require('./utils')
 
 async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
     const now = new Date()

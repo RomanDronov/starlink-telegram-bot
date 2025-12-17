@@ -1,5 +1,16 @@
 const SunCalc = require('suncalc')
 
+function formatLocalTime(date, timeZone) {
+    return new Intl.DateTimeFormat('en-GB', {
+        timeZone,
+        hour: '2-digit',
+        minute: '2-digit',
+        day: '2-digit',
+        month: '2-digit',
+        timeZoneName: 'short'
+    }).format(date)
+}
+
 const MIN_AFTER_SUNSET_MS = 10 * 60 * 1000
 const MIN_BEFORE_SUNRISE_MS = 30 * 60 * 1000
 
@@ -28,5 +39,6 @@ function overlapsWindow(pass, window) {
 
 module.exports = {
     getNightWindow,
-    overlapsWindow
+    overlapsWindow,
+    formatLocalTime
 }
