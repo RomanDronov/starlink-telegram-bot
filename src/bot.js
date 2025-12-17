@@ -7,7 +7,7 @@ const bot = new TelegramBot(config.telegramToken, { polling: true })
 // In-memory user settings { [userId]: { lat, lon } }
 const userLocations = new Map()
 
-function send(chatId, text, options = {}) {
+export function send(chatId, text, options = {}) {
     return bot.sendMessage(chatId, text, {
         parse_mode: 'Markdown',
         ...options
@@ -43,7 +43,7 @@ bot.onText(/\/setlocation ([-+]?\d+(\.\d+)?) ([-+]?\d+(\.\d+)?)/, async msg => {
         `Location updated to lat=${lat.toFixed(3)}, lon=${lon.toFixed(3)} ✅\nCalculating visible passes...`
     )
 
-    await handleLocationAndListPasses(userId, chatId, lat, lon)
+    await handleLocationAndListPasses(userId, chatId, lat, lon, send)
 })
 
 bot.on('message', async msg => {
