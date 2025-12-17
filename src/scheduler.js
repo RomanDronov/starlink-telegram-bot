@@ -1,3 +1,5 @@
+const tzLookup = require('tz-lookup')
+
 const {getVisibleStarlinkPassesForLocation} = require('./starlink')
 const {getNightWindow} = require('./utils')
 
@@ -23,9 +25,10 @@ async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
     const subset = passes.slice(0, maxToShow)
 
     let text = `Found ${passes.length} visible Starlink passes for the next 24 hours over your location.\n` + `Here are the first ${subset.length}:\n\n`
-    const window = getNightWindow(lat, lon, now)
+    const tz = tzLookup(lat, lon)
+    const w = getNightWindow(lat, lon)
 
-    text += `🌅 Night window start (sunset+10m): ${window.start.toISOString()}\n` + `🌄 Night window end (sunrise-30m): ${window.end.toISOString()}\n\n` + text
+    text += `🌍 Timezone: ${tz}\n` + `🌅 Sunset: ${formatLocalTime(w.sunset, tz)}\n` + `🌄 Sunrise: ${formatLocalTime(w.sunrise, tz)}\n` + `🕒 Visibility window: ${formatLocalTime(w.start, tz)} → ${formatLocalTime(w.end, tz)}\n\n`
 
     subset.forEach((entry, idx) => {
         const {satelliteName, pass} = entry
