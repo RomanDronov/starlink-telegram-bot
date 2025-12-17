@@ -43,7 +43,7 @@ bot.onText(/\/setlocation ([-+]?\d+(\.\d+)?) ([-+]?\d+(\.\d+)?)/, async msg => {
         `Location updated to lat=${lat.toFixed(3)}, lon=${lon.toFixed(3)} ✅\nCalculating visible passes...`
     )
 
-    await handleLocationAndListPasses(userId, chatId, lat, lon)
+    await handleLocationAndListPasses(userId, chatId, lat, lon, send)
 })
 
 bot.on('message', async msg => {

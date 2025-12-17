@@ -1,6 +1,6 @@
 const { getVisibleStarlinkPassesForLocation } = require('./starlink')
 
-async function handleLocationAndListPasses(userId, chatId, lat, lon) {
+async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
     const now = new Date()
 
     let passes
