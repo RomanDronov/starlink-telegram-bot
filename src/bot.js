@@ -7,7 +7,7 @@ const bot = new TelegramBot(config.telegramToken, { polling: true })
 // In-memory user settings { [userId]: { lat, lon } }
 const userLocations = new Map()
 
-export function send(chatId, text, options = {}) {
+function send(chatId, text, options = {}) {
     return bot.sendMessage(chatId, text, {
         parse_mode: 'Markdown',
         ...options
