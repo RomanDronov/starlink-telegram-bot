@@ -10,6 +10,21 @@ function formatLocalTime(date, timeZone) {
 const MIN_AFTER_SUNSET_MS = 10 * 60 * 1000
 const MIN_BEFORE_SUNRISE_MS = 30 * 60 * 1000
 
+function getNightWindows(lat, lon, now, days) {
+    const windows = []
+    for (let i = 0; i < days; i += 1) {
+        const d = new Date(now)
+        d.setDate(d.getDate() + i)
+        const w = getNightWindow(lat, lon, d)
+        if (w) windows.push(w)
+    }
+    return windows
+}
+
+function overlapsAnyWindow(pass, windows) {
+    return windows.some(w => pass.end > w.start && pass.start < w.end)
+}
+
 function getNightWindow(lat, lon, baseDate = new Date()) {
     const today = new Date(baseDate)
     today.setHours(12, 0, 0, 0)
@@ -116,5 +131,7 @@ module.exports = {
     getNightWindow,
     overlapsWindow,
     formatLocalTime,
+    getNightWindows,
+    overlapsAnyWindow,
     estimateBrightness
 }

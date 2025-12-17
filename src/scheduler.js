@@ -6,12 +6,12 @@ const {BRIGHTNESS_EMOJI} = require('./constants')
 
 const MAX_TO_SHOW = 10
 
-async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
+async function handleLocationAndListPasses(userId, chatId, lat, lon, send, days=1) {
     const now = new Date()
 
     let passes
     try {
-        passes = await getVisibleStarlinkPassesForLocation(lat, lon, now, 100)
+        passes = await getVisibleStarlinkPassesForLocation(lat, lon, now, 100, days)
     } catch (err) {
         console.error(err)
         await send(chatId, 'Error while computing Starlink passes. Try again later.')
@@ -42,8 +42,7 @@ async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
         const end = formatLocalTime(pass.end, tz)
         const peak = formatLocalTime(pass.maxTime, tz)
         text += `#${idx + 1}\n` + `Satellite: ${satelliteName}\n` + `Start: ${start}\n` + `End:   ${end}\n` + `Peak:  ${peak}\n` + `Duration: ${passDurationMin(pass).toFixed(1)} min\n` + `Max elevation: ${pass.maxElevationDeg.toFixed(1)}°\n\n`
-        text +=
-            `Brightness: ${BRIGHTNESS_EMOJI[brightness]} ${brightness}\n`
+        text += `Brightness: ${BRIGHTNESS_EMOJI[brightness]} ${brightness}\n`
     })
 
     await send(chatId, text)
