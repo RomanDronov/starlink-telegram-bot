@@ -32,7 +32,7 @@ async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
 
     text += `🌍 Timezone: ${tz}\n` + `🌅 Sunset: ${formatLocalTime(w.sunset, tz)}\n` + `🌄 Sunrise: ${formatLocalTime(w.sunrise, tz)}\n` + `🕒 Visibility window: ${formatLocalTime(w.start, tz)} → ${formatLocalTime(w.end, tz)}\n\n`
 
-    text += `⭐ Best pass tonight:\n` + `Satellite: ${subset[0].satelliteName}\n` + `Peak: ${fmtLocal(subset[0].pass.maxTime, tz)}\n` + `Max elevation: ${subset[0].pass.maxElevationDeg.toFixed(1)}°\n\n`
+    text += `⭐ Best pass tonight:\n` + `Satellite: ${subset[0].satelliteName}\n` + `Peak: ${formatLocalTime(subset[0].pass.maxTime, tz)}\n` + `Max elevation: ${subset[0].pass.maxElevationDeg.toFixed(1)}°\n\n`
 
     subset.forEach((entry, idx) => {
         const {satelliteName, pass} = entry
