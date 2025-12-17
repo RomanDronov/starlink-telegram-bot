@@ -1,13 +1,9 @@
 const SunCalc = require('suncalc')
+const satellite = require('satellite.js')
 
 function formatLocalTime(date, timeZone) {
     return new Intl.DateTimeFormat('en-GB', {
-        timeZone,
-        hour: '2-digit',
-        minute: '2-digit',
-        day: '2-digit',
-        month: '2-digit',
-        timeZoneName: 'short'
+        timeZone, hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit', timeZoneName: 'short'
     }).format(date)
 }
 
@@ -30,7 +26,7 @@ function getNightWindow(lat, lon, baseDate = new Date()) {
     const start = new Date(sunset.getTime() + MIN_AFTER_SUNSET_MS)
     const end = new Date(sunrise.getTime() - MIN_BEFORE_SUNRISE_MS)
 
-    return { sunset, sunrise, start, end }
+    return {sunset, sunrise, start, end}
 }
 
 function overlapsWindow(pass, window) {
@@ -63,12 +59,33 @@ function passDurationMin(pass) {
     return (pass.end.getTime() - pass.start.getTime()) / 60000
 }
 
+function estimateBrightness({pass, satrec}) {
+    if (!isSatelliteSunlit(satrec, pass.maxTime)) {
+        return 'not-visible'
+    }
+
+    const elev = pass.maxElevationDeg
+
+    if (elev >= 70) return 'very-bright'
+    if (elev >= 45) return 'bright'
+    if (elev >= 25) return 'visible'
+    if (elev >= 15) return 'faint'
+    return 'not-visible'
+}
+
+function isSatelliteSunlit(satrec, date) {
+    const positionEci = satellite.propagate(
+        satrec,
+        date
+    ).position
+
+    if (!positionEci) return false
+
+    const gmst = satellite.gstime(date)
+    return satellite.isSunlit(positionEci, gmst)
+}
+
 module.exports = {
-    isLikelyVisible,
-    passDurationMin,
-    scorePass,
-    isNotifyWorthy,
-    getNightWindow,
-    overlapsWindow,
-    formatLocalTime
+    isLikelyVisible, passDurationMin, scorePass, isNotifyWorthy, getNightWindow, overlapsWindow, formatLocalTime,
+    estimateBrightness
 }
