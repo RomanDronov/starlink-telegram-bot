@@ -27,9 +27,18 @@ bot.onText(/\/setlocation ([-+]?\d+(\.\d+)?) ([-+]?\d+(\.\d+)?)/, async msg => {
     const lat = parseFloat(msg.text.split(' ')[1])
     const lon = parseFloat(msg.text.split(' ')[2])
 
-    userSettings.set(userId, {
-        lat, lon, days: 1, notify: true, leadMinutes: 30
-    })
+    const prev = userSettings.get(userId)
+
+    if (prev && prev.days) {
+        userSettings.set(userId, {
+            ...prev, lat, lon
+        })
+    } else {
+        userSettings.set(userId, {
+            lat, lon, days: 1, notify: true, leadMinutes: 30
+        })
+    }
+
 
     if (Number.isNaN(lat) || Number.isNaN(lon)) {
         await send(chatId, 'Could not parse coordinates. Use: `/setlocation lat lon`')
@@ -67,8 +76,7 @@ bot.onText(/\/days (\d+)/, async msg => {
     }
 
     userSettings.set(userId, {
-        ...prev,
-        days
+        ...prev, days
     })
     await handleLocationAndListPasses(userId, chatId, prev.lat, prev.lon, send, days)
 })
