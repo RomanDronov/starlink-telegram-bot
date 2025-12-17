@@ -1,7 +1,9 @@
 const tzLookup = require('tz-lookup')
 
 const {getVisibleStarlinkPassesForLocation} = require('./starlink')
-const {getNightWindow, formatLocalTime} = require('./utils')
+const {getNightWindow, formatLocalTime, passDurationMin, scorePass} = require('./utils')
+
+const MAX_TO_SHOW = 10
 
 async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
     const now = new Date()
@@ -20,9 +22,9 @@ async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
         return
     }
 
-    // limit how much we spam – e.g. show first 10 passes
-    const maxToShow = 10
-    const subset = passes.slice(0, maxToShow)
+    const sorted = [...passes].sort((a, b) => scorePass(b.pass) - scorePass(a.pass))
+
+    const subset = sorted.slice(0, MAX_TO_SHOW)
 
     let text = `Found ${passes.length} visible Starlink passes for the next 24 hours over your location.\n` + `Here are the first ${subset.length}:\n\n`
     const tz = tzLookup(lat, lon)
@@ -30,15 +32,16 @@ async function handleLocationAndListPasses(userId, chatId, lat, lon, send) {
 
     text += `🌍 Timezone: ${tz}\n` + `🌅 Sunset: ${formatLocalTime(w.sunset, tz)}\n` + `🌄 Sunrise: ${formatLocalTime(w.sunrise, tz)}\n` + `🕒 Visibility window: ${formatLocalTime(w.start, tz)} → ${formatLocalTime(w.end, tz)}\n\n`
 
+    text += `⭐ Best pass tonight:\n` + `Satellite: ${subset[0].satelliteName}\n` + `Peak: ${fmtLocal(subset[0].pass.maxTime, tz)}\n` + `Max elevation: ${subset[0].pass.maxElevationDeg.toFixed(1)}°\n\n`
+
     subset.forEach((entry, idx) => {
         const {satelliteName, pass} = entry
-        const start = pass.start.toISOString()
-        const end = pass.end.toISOString()
-        const peak = pass.maxTime.toISOString()
-        text += `#${idx + 1}\n` + `Satellite: ${satelliteName}\n` + `Start (UTC): ${start}\n` + `End   (UTC): ${end}\n` + `Peak  (UTC): ${peak}\n` + `Max elevation: ${pass.maxElevationDeg.toFixed(1)}°\n\n`
-    })
 
-    text += '_Times shown in UTC. Visibility is approximate (ignores clouds and, currently, satellite shadow)._'
+        const start = formatLocalTime(pass.start, tz)
+        const end = formatLocalTime(pass.end, tz)
+        const peak = formatLocalTime(pass.maxTime, tz)
+        text += `#${idx + 1}\n` + `Satellite: ${satelliteName}\n` + `Start: ${start}\n` + `End:   ${end}\n` + `Peak:  ${peak}\n` + `Duration: ${passDurationMin(pass).toFixed(1)} min\n` + `Max elevation: ${pass.maxElevationDeg.toFixed(1)}°\n\n`
+    })
 
     await send(chatId, text)
 

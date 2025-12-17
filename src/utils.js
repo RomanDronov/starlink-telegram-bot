@@ -51,8 +51,22 @@ function isNotifyWorthy(pass) {
     return durMin >= 3 && pass.maxElevationDeg >= 30
 }
 
+function scorePass(pass) {
+    const durMin = passDurationMin(pass)
+    const elev = pass.maxElevationDeg
+
+    // elevation matters more than duration
+    return elev * 2 + durMin * 10
+}
+
+function passDurationMin(pass) {
+    return (pass.end.getTime() - pass.start.getTime()) / 60000
+}
+
 module.exports = {
     isLikelyVisible,
+    passDurationMin,
+    scorePass,
     isNotifyWorthy,
     getNightWindow,
     overlapsWindow,
