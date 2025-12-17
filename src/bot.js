@@ -60,15 +60,17 @@ bot.onText(/\/days (\d+)/, async msg => {
     const userId = msg.from.id
     const days = Math.max(1, Math.min(10, parseInt(msg.text.split(' ')[1], 10)))
 
-    const loc = userLocations.get(userId)
-    if (!loc) return send(chatId, 'Send location first 📍')
-
     const prev = userSettings.get(userId) || {}
+    if (Number.isNaN(prev.lat) || Number.isNaN(prev.lon)) {
+        await send(chatId, 'Could not parse coordinates. Use: `/setlocation lat lon`')
+        return
+    }
+
     userSettings.set(userId, {
         ...prev,
         days
     })
-    await handleLocationAndListPasses(userId, chatId, loc.lat, loc.lon, send, days)
+    await handleLocationAndListPasses(userId, chatId, prev.lat, prev.lon, send, days)
 })
 
 console.log('Starlink bot is running...')
