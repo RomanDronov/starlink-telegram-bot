@@ -1,6 +1,6 @@
-🌌 Starlink Visibility Telegram Bot
+# 🌌 Starlink Visibility Telegram Bot
 
-A Telegram bot that predicts visible Starlink satellite passes over a user’s
+A Telegram bot that predicts visible Starlink satellite passes over a user's
 location and notifies about the best sightings.
 
 The bot:
@@ -14,9 +14,7 @@ The bot:
 
 Built with Node.js, satellite.js v6, and SunCalc.
 
-==================================================
-✨ FEATURES
-==================================================
+## ✨ FEATURES
 
 - 📍 Location via Telegram or `/setlocation lat lon`
 - 🌅 Accurate sunset / sunrise window
@@ -28,9 +26,7 @@ Built with Node.js, satellite.js v6, and SunCalc.
 - 📅 Supports multiple days (configurable)
 - ⏰ Ready for notifications (e.g. 30 min before best pass)
 
-==================================================
-🧠 HOW IT WORKS
-==================================================
+## 🧠 HOW IT WORKS
 
 1. Downloads Starlink TLEs
 2. Propagates orbits using SGP4
@@ -42,9 +38,7 @@ Built with Node.js, satellite.js v6, and SunCalc.
 5. Ranks passes by quality
 6. Formats output in local time for the location
 
-==================================================
-📦 TECH STACK
-==================================================
+## 📦 TECH STACK
 
 - Node.js
 - satellite.js v6 — orbit propagation
@@ -53,62 +47,73 @@ Built with Node.js, satellite.js v6, and SunCalc.
 - node-telegram-bot-api
 - PM2 (recommended for production)
 
-==================================================
-🚀 SETUP
-==================================================
+## 🚀 SETUP
 
-1) Clone repository
+### 1) Clone repository
 
+```bash
 git clone https://github.com/yourusername/starlink-telegram-bot.git
 cd starlink-telegram-bot
+```
 
-2) Install dependencies
+### 2) Install dependencies
 
+```bash
 yarn install
+```
 
-# or
+or
 
+```bash
 npm install
+```
 
-3) Environment variables (.env)
+### 3) Environment variables (.env)
 
+```env
 TELEGRAM_BOT_TOKEN=YOUR_TELEGRAM_BOT_TOKEN
 STARLINK_TLE_URL=https://celestrak.org/NORAD/elements/gp.php?GROUP=starlink&FORMAT=tle
+```
 
 ⚠️ Never commit real tokens.
 
-4) Run locally
+### 4) Run locally
 
+```bash
 node src/bot.js
+```
 
 Or with PM2:
 
+```bash
 pm2 start src/bot.js --name starlink-bot
 pm2 save
+```
 
-==================================================
-🤖 TELEGRAM COMMANDS
-==================================================
+## 🤖 TELEGRAM COMMANDS
 
-/start
+### `/start`
 Shows help message.
 
-/setlocation lat lon
+### `/setlocation lat lon`
 Example:
+```
 /setlocation 52.52 13.405
+```
 
 📍 Send location via Telegram UI:
 Attach → Location → Send
 
-/days N
+### `/days N`
 Show passes for the next N days (default: 1)
 Example:
+```
 /days 5
+```
 
-==================================================
-📊 EXAMPLE OUTPUT
-==================================================
+## 📊 EXAMPLE OUTPUT
 
+```
 🌍 Timezone: Europe/Berlin
 🌅 Sunset: 17/12, 15:53 CET
 🌄 Sunrise: 18/12, 08:14 CET
@@ -126,10 +131,9 @@ Direction:
 Start: SW (231°)
 Peak:  S  (179°)
 End:   SE (121°)
+```
 
-==================================================
-🌞 BRIGHTNESS ESTIMATION
-==================================================
+## 🌞 BRIGHTNESS ESTIMATION
 
 Brightness is estimated, not exact.
 
@@ -146,9 +150,7 @@ Levels:
 - 👀 visible (≥ 25°)
 - 🌫️ faint (≥ 15°)
 
-==================================================
-🧭 DIRECTION
-==================================================
+## 🧭 DIRECTION
 
 Direction is computed using:
 
@@ -162,18 +164,14 @@ Displayed for:
 - peak
 - end of each pass
 
-==================================================
-⚠️ LIMITATIONS
-==================================================
+## ⚠️ LIMITATIONS
 
 - No cloud cover prediction
 - No exact magnitude (Starlink attitude not public)
 - No flare prediction
 - In-memory user settings (lost on restart)
 
-==================================================
-🛠 FUTURE IMPROVEMENTS
-==================================================
+## 🛠 FUTURE IMPROVEMENTS
 
 - 🔔 Automatic notifications (best pass only)
 - 🌙 Moon interference penalty
@@ -181,15 +179,11 @@ Displayed for:
 - 🌍 Light-pollution aware scoring
 - 🧪 Unit tests for orbit logic
 
-==================================================
-📜 LICENSE
-==================================================
+## 📜 LICENSE
 
 MIT License — free to use, modify, and distribute.
 
-==================================================
-❤️ CREDITS
-==================================================
+## ❤️ CREDITS
 
 - Celestrak — TLE data
 - satellite.js — orbit propagation
