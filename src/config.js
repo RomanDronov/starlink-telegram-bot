@@ -1,4 +1,6 @@
-require('dotenv').config()
+import dotenv from 'dotenv'
+
+dotenv.config()
 
 console.log('TOKEN loaded:', !!process.env.TELEGRAM_BOT_TOKEN)
 
@@ -18,4 +20,6 @@ if (!config.telegramToken) {
     throw new Error('TELEGRAM_BOT_TOKEN is not set')
 }
 
-module.exports = config
+export {
+    config
+}

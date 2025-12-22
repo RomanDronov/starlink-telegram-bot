@@ -1,6 +1,6 @@
-const TelegramBot = require('node-telegram-bot-api')
-const config = require('./config')
-const {handleLocationAndListPasses} = require('./scheduler')
+import TelegramBot from 'node-telegram-bot-api'
+import {config} from './config.js'
+import {handleLocationAndListPasses} from './scheduler.js'
 
 const bot = new TelegramBot(config.telegramToken, {polling: true})
 

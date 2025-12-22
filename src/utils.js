@@ -1,5 +1,5 @@
-const SunCalc = require('suncalc')
-const satellite = require('satellite.js')
+import SunCalc from 'suncalc'
+import satellite from 'satellite.js'
 
 function formatLocalTime(date, timeZone) {
     return new Intl.DateTimeFormat('en-GB', {
@@ -124,7 +124,7 @@ function isSatelliteSunlit(satrec, date) {
 }
 
 
-module.exports = {
+export {
     passDurationMin,
     scorePass,
     isNotifyWorthy,

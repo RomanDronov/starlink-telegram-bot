@@ -1,15 +1,11 @@
-const fetch = require('node-fetch')
-const satellite = require('satellite.js')
-const SunCalc = require('suncalc')
-const config = require('./config')
-const {
-    getNightWindow,
-    overlapsWindow,
-    isNotifyWorthy,
-    estimateBrightness,
-    getNightWindows,
-    overlapsAnyWindow
-} = require('./utils')
+import fetch from 'node-fetch'
+import satellite from 'satellite.js'
+import SunCalc from 'suncalc'
+
+import {config} from './config.js'
+import {
+    getNightWindow, overlapsWindow, isNotifyWorthy, estimateBrightness, getNightWindows, overlapsAnyWindow
+} from './utils.js'
 
 /**
  * Fetch Starlink TLEs from Celestrak (or another source).
@@ -200,10 +196,7 @@ async function getVisibleStarlinkPassesForLocation(latDeg, lonDeg, now = new Dat
         for (const pass of passes) {
 
             const brightness = estimateBrightness({
-                pass,
-                satrec,
-                lat: latDeg,
-                lon: lonDeg
+                pass, satrec, lat: latDeg, lon: lonDeg
             })
 
             if (brightness === 'not-visible') continue
@@ -224,6 +217,6 @@ async function getVisibleStarlinkPassesForLocation(latDeg, lonDeg, now = new Dat
     return results.filter(({pass}) => overlapsAnyWindow(pass, windows))
 }
 
-module.exports = {
+export {
     getVisibleStarlinkPassesForLocation
 }

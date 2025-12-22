@@ -1,12 +1,12 @@
-const tzLookup = require('tz-lookup')
+import tzLookup from 'tz-lookup'
 
-const {getVisibleStarlinkPassesForLocation} = require('./starlink')
-const {getNightWindow, formatLocalTime, passDurationMin, scorePass} = require('./utils')
-const {BRIGHTNESS_EMOJI} = require('./constants')
+import {getVisibleStarlinkPassesForLocation} from './starlink.js'
+import {getNightWindow, formatLocalTime, passDurationMin, scorePass} from './utils.js'
+import {BRIGHTNESS_EMOJI} from './constants.js'
 
 const MAX_TO_SHOW = 10
 
-async function handleLocationAndListPasses(userId, chatId, lat, lon, send, days=1) {
+async function handleLocationAndListPasses(userId, chatId, lat, lon, send, days = 1) {
     const now = new Date()
 
     let passes
@@ -51,6 +51,6 @@ async function handleLocationAndListPasses(userId, chatId, lat, lon, send, days=
     //  await scheduleNotificationForPass(userId, chatId, first)
 }
 
-module.exports = {
+export {
     handleLocationAndListPasses
 }
