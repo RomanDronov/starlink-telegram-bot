@@ -70,9 +70,9 @@ function passDurationMin(pass) {
 }
 
 function estimateBrightness({pass, satrec}) {
-    if (!isSatelliteSunlit(satrec, pass.maxTime)) {
-        return 'not-visible'
-    }
+    // if (!isSatelliteSunlit(satrec, pass.maxTime)) {
+    //     return 'not-visible'
+    // }
 
     const elev = pass.maxElevationDeg
 
