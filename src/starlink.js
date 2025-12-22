@@ -206,7 +206,7 @@ async function getVisibleStarlinkPassesForLocation(latDeg, lonDeg, now = new Dat
             if (!isNotifyWorthy(pass)) continue
 
             results.push({
-                satelliteName: tle.name, pass, brightness
+                satelliteName: tle.name, pass, brightness, satrec
             })
         }
     }

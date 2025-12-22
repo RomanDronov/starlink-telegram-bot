@@ -87,11 +87,6 @@ function magnitude(v) {
     return Math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
 }
 
-function normalize(v) {
-    const mag = magnitude({x: v[0], y: v[1], z: v[2]});
-    return mag > 0 ? {x: v[0] / mag, y: v[1] / mag, z: v[2] / mag} : {x: 0, y: 0, z: 0};
-}
-
 function dot(a, b) {
     return a.x * b.x + a.y * b.y + a.z * b.z;
 }
@@ -144,6 +139,38 @@ function isSatelliteSunlit(satrec, date) {
 }
 
 
+function deg(rad) {
+    return (rad * 180) / Math.PI
+}
+
+function azToCompass(azDeg) {
+    const dirs = ['N', 'NE', 'E', 'SE', 'S', 'SW', 'W', 'NW']
+    return dirs[Math.round(azDeg / 45) % 8]
+}
+
+function getAzDeg(satrec, when, latDeg, lonDeg, heightKm = 0) {
+    const pv = satellite.propagate(satrec, when)
+    if (!pv.position) return null
+
+    const gmst = satellite.gstime(when)
+    const posEcf = satellite.eciToEcf(pv.position, gmst)
+
+    const observerGd = {
+        latitude: satellite.degreesToRadians(latDeg),
+        longitude: satellite.degreesToRadians(lonDeg),
+        height: heightKm
+    }
+
+    const look = satellite.ecfToLookAngles(observerGd, posEcf)
+    return (deg(look.azimuth) + 360) % 360
+}
+
+function fmtDir(azDeg) {
+    if (azDeg == null) return 'n/a'
+    return `${azToCompass(azDeg)} (${azDeg.toFixed(0)}°)`
+}
+
+
 
 export {
     passDurationMin,
@@ -152,6 +179,8 @@ export {
     getNightWindow,
     overlapsWindow,
     formatLocalTime,
+    getAzDeg,
+    fmtDir,
     isSatelliteSunlit,
     getNightWindows,
     overlapsAnyWindow,

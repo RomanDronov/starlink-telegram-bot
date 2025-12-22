@@ -1,7 +1,7 @@
 import tzLookup from 'tz-lookup'
 
 import {getVisibleStarlinkPassesForLocation} from './starlink.js'
-import {getNightWindow, formatLocalTime, passDurationMin, scorePass} from './utils.js'
+import {getNightWindow, formatLocalTime, passDurationMin, scorePass, getAzDeg, fmtDir} from './utils.js'
 import {BRIGHTNESS_EMOJI} from './constants.js'
 
 const MAX_TO_SHOW = 10
@@ -41,8 +41,18 @@ async function handleLocationAndListPasses(userId, chatId, lat, lon, send, days 
         const start = formatLocalTime(pass.start, tz)
         const end = formatLocalTime(pass.end, tz)
         const peak = formatLocalTime(pass.maxTime, tz)
+
+        const startAz = getAzDeg(entry.satrec, pass.start, lat, lon)
+        const peakAz = getAzDeg(entry.satrec, pass.maxTime, lat, lon)
+        const endAz = getAzDeg(entry.satrec, pass.end, lat, lon)
+
         text += `#${idx + 1}\n` + `Satellite: ${satelliteName}\n` + `Start: ${start}\n` + `End:   ${end}\n` + `Peak:  ${peak}\n` + `Duration: ${passDurationMin(pass).toFixed(1)} min\n` + `Max elevation: ${pass.maxElevationDeg.toFixed(1)}°\n\n`
         text += `Brightness: ${BRIGHTNESS_EMOJI[brightness]} ${brightness}\n`
+        text +=
+            `Direction 🧭:\n` +
+            `  Start: ${fmtDir(startAz)}\n` +
+            `  Peak:  ${fmtDir(peakAz)}\n` +
+            `  End:   ${fmtDir(endAz)}\n`
     })
 
     await send(chatId, text)
