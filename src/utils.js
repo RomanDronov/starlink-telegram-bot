@@ -70,9 +70,9 @@ function passDurationMin(pass) {
 }
 
 function estimateBrightness({pass, satrec}) {
-    // if (!isSatelliteSunlit(satrec, pass.maxTime)) {
-    //     return 'not-visible'
-    // }
+    if (!isSatelliteSunlit(satrec, pass.maxTime)) {
+        return 'not-visible'
+    }
 
     const elev = pass.maxElevationDeg
 
@@ -101,27 +101,48 @@ function isSatelliteSunlit(satrec, date) {
     if (!pv || !pv.position) return false;
 
     const jday = satellite.jday(date);
-    const sunPos = satellite.sunPos(jday);  // Returns {rsun: [x,y,z], rtasc, decl}
+    const sunPosObj = satellite.sunPos(jday);
+    const sunPos = {
+        x: sunPosObj.rsun[0],
+        y: sunPosObj.rsun[1],
+        z: sunPosObj.rsun[2],
+    };
+    const satPos = pv.position; // ECI, km
 
-    const satPos = pv.position;  // ECI km
-    const sunDir = normalize(sunPos.rsun);  // Unit vector toward Sun (AU, normalize to unit)
-
-    // Earth radius ~6378.137 km (equatorial mean)
     const earthR = 6378.137;
-    const satR = magnitude(satPos);  // Satellite distance from Earth center
 
-    if (satR <= earthR) return false;  // Inside Earth
+    const sunDist = magnitude(sunPos);
+    const sunDir = {
+        x: sunPos.x / sunDist,
+        y: sunPos.y / sunDist,
+        z: sunPos.z / sunDist,
+    };
 
-    // Angle between sat pos and sun dir
-    const cosTheta = dot(satPos, sunDir) / satR;  // sunDir unit
-    const theta = Math.acos(Math.max(-1, Math.min(1, cosTheta)));
+    const s = dot(satPos, sunDir);
 
-    // Umbra cone: cos(alpha) = earthR / (earthR + ~0.27 earthR shadow length, simplified)
-    const alpha = 0.27;  // Approx umbra half-angle radians
-    const cosAlpha = earthR / (earthR * (1 + alpha));
+    if (s >= 0) {
+        // In front of Earth w.r.t. Sun: always sunlit in cylindrical model
+        return true;
+    }
 
-    return theta <= Math.PI / 2 || theta < Math.acos(cosAlpha);  // Sunlit if not fully shadowed
+    // Behind Earth: test if inside shadow cylinder
+    const satAlongAxis = {
+        x: sunDir.x * s,
+        y: sunDir.y * s,
+        z: sunDir.z * s,
+    };
+    const satPerpendicular = {
+        x: satPos.x - satAlongAxis.x,
+        y: satPos.y - satAlongAxis.y,
+        z: satPos.z - satAlongAxis.z,
+    };
+
+    const distFromAxis = magnitude(satPerpendicular);
+    const inUmbra = distFromAxis <= earthR;
+
+    return !inUmbra;
 }
+
 
 
 export {
@@ -131,6 +152,7 @@ export {
     getNightWindow,
     overlapsWindow,
     formatLocalTime,
+    isSatelliteSunlit,
     getNightWindows,
     overlapsAnyWindow,
     estimateBrightness
